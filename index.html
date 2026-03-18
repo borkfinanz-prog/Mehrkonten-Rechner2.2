@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mehrkonten-System | Finanzberatung</title>
+<!-- Keine externen Ressourcen – DSGVO-konform -->
+<style>
+  :root {
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-dark: #0C447C;
+    --green: #0F6E56;
+    --green-light: #E1F5EE;
+    --amber: #854F0B;
+    --amber-light: #FAEEDA;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --gray-50: #F8F7F4;
+    --gray-100: #F1EFE8;
+    --gray-200: #D3D1C7;
+    --gray-400: #888780;
+    --gray-600: #5F5E5A;
+    --gray-900: #1A1917;
+    --border: rgba(0,0,0,0.08);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  /* Header */
+  .header {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .header-icon svg { width: 18px; height: 18px; fill: white; }
+  .header-title { font-size: 18px; color: var(--gray-900); font-weight: 600; }
+  .header-subtitle { font-size: 12px; color: var(--gray-400); font-weight: 400; }
+  .progress-bar-wrap { height: 3px; background: var(--gray-100); }
+  .progress-bar { height: 100%; background: var(--blue); transition: width 0.4s ease; }
+
+  /* Layout */
+  .container { max-width: 680px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* Steps */
+  .step { display: none; animation: fadeIn 0.3s ease; }
+  .step.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Step header */
+  .step-num { font-size: 11px; font-weight: 600; color: var(--blue); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .step-title { font-size: 26px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; line-height: 1.2; }
+  .step-sub { font-size: 14px; color: var(--gray-400); margin-bottom: 28px; line-height: 1.6; }
+
+  /* Info box */
+  .info-box {
+    background: var(--blue-light);
+    border-left: 3px solid var(--blue);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
+  .info-box-title { font-size: 12px; font-weight: 600; color: var(--blue); margin-bottom: 3px; }
+  .info-box-text { font-size: 12px; color: var(--blue-dark); line-height: 1.6; }
+  .warn-box {
+    background: var(--amber-light);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .warn-box-title { font-size: 12px; font-weight: 600; color: var(--amber); margin-bottom: 3px; }
+  .warn-box-text { font-size: 12px; color: var(--amber); line-height: 1.6; }
+
+  /* Card */
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Bank grid */
+  .bank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .bank-btn {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 10px;
+    cursor: pointer;
+    text-align: center;
+    background: white;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .bank-btn:hover { border-color: var(--blue); background: var(--blue-light); }
+  .bank-btn.selected { border-color: var(--blue); background: var(--blue-light); }
+  .bank-btn .rec { font-size: 9px; background: var(--blue); color: white; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.5px; }
+  .bank-btn .name { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+  .bank-btn .type { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .custom-row { display: flex; gap: 8px; margin-top: 4px; }
+  .custom-row input { flex: 1; }
+
+  /* Form elements */
+  .field-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .field-row label { font-size: 13px; color: var(--gray-600); width: 160px; flex-shrink: 0; font-weight: 500; }
+  input[type=text], input[type=number], input[type=date] {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: white;
+    color: var(--gray-900);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+  input:focus { outline: none; border-color: var(--blue); }
+  .eur { font-size: 13px; color: var(--gray-400); flex-shrink: 0; font-weight: 500; }
+  .del-btn { background: none; border: none; color: var(--gray-200); cursor: pointer; font-size: 18px; padding: 0 4px; flex-shrink: 0; transition: color 0.15s; }
+  .del-btn:hover { color: var(--red); }
+  .add-btn {
+    background: none;
+    border: 1.5px dashed var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--gray-400);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .add-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+  .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: var(--gray-900); padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--border); }
+
+  /* Spar block */
+  .spar-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 10px;
+    background: var(--gray-50);
+  }
+  .spar-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .spar-block-name { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+  .spar-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .spar-field { display: flex; flex-direction: column; gap: 4px; }
+  .spar-field label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.4px; }
+  .spar-field input { padding: 7px 10px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); background: white; color: var(--gray-900); font-size: 13px; font-family: inherit; width: 100%; }
+  .spar-field input:focus { outline: none; border-color: var(--blue); }
+  .prio-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .prio-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .prio-label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.4px; }
+  .prio-value { font-size: 12px; font-weight: 600; }
+  input[type=range] { width: 100%; height: 4px; -webkit-appearance: none; border-radius: 2px; background: var(--gray-100); outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); cursor: pointer; }
+  .prio-ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--gray-400); margin-top: 3px; }
+  .spar-result { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 6px; }
+  .spar-monthly { font-size: 18px; font-weight: 700; }
+  .spar-info { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .prog-bar { height: 4px; border-radius: 2px; background: var(--gray-100); overflow: hidden; margin-top: 6px; }
+  .prog-fill { height: 100%; border-radius: 2px; }
+
+  /* Navigation */
+  .nav { display: flex; gap: 10px; margin-top: 28px; }
+  .btn-back {
+    flex: 1; padding: 12px; border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm); background: white; color: var(--gray-600);
+    font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-back:hover { border-color: var(--gray-400); }
+  .btn-next {
+    flex: 2; padding: 12px; border: none;
+    border-radius: var(--radius-sm); background: var(--blue); color: white;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-next:hover { background: var(--blue-dark); }
+
+  /* Result page */
+  .alert { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; margin-bottom: 16px; }
+  .alert-ok { background: #EAF3DE; color: #3B6D11; border-left: 3px solid #639922; }
+  .alert-warn { background: var(--amber-light); color: var(--amber); border-left: 3px solid var(--amber); }
+  .alert-err { background: var(--red-light); color: var(--red); border-left: 3px solid var(--red); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; box-shadow: var(--shadow); }
+  .stat-label { font-size: 10px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-val { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+
+  .konto-card { border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .konto-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .konto-name { font-size: 14px; font-weight: 700; }
+  .konto-bank { font-size: 11px; color: var(--gray-400); margin-top: 2px; font-weight: 400; }
+  .konto-amount { font-size: 22px; font-weight: 700; text-align: right; }
+  .konto-sub { font-size: 10px; color: var(--gray-400); text-align: right; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+  .konto-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.3); overflow: hidden; margin-top: 8px; }
+  .konto-bar-fill { height: 100%; border-radius: 2px; background: rgba(255,255,255,0.6); }
+  .konto-detail { font-size: 11px; margin-top: 10px; line-height: 2; opacity: 0.85; }
+
+  .section-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; }
+  .divider-line { flex: 1; height: 1px; background: var(--border); }
+  .divider-label { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+
+  .pocket-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 6px; background: white; }
+  .pocket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px; }
+  .pocket-name { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+  .pocket-amount { font-size: 14px; font-weight: 700; }
+  .pocket-iban { font-size: 10px; color: var(--gray-400); margin-top: 1px; }
+  .pocket-meta { font-size: 10px; color: var(--gray-400); margin-top: 4px; line-height: 1.7; }
+  .pips { display: flex; align-items: center; gap: 3px; margin-top: 3px; }
+  .pip { width: 7px; height: 7px; border-radius: 50%; }
+  .pip-label { font-size: 10px; font-weight: 600; margin-left: 3px; }
+  .adj-badge { font-size: 9px; background: var(--amber-light); color: var(--amber); padding: 1px 5px; border-radius: 8px; margin-left: 5px; font-weight: 600; }
+
+  /* Flow diagram */
+  .flow-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: var(--shadow);
+  }
+  .flow-card-title { font-family: inherit; font-size: 16px; color: var(--gray-900); margin-bottom: 4px; }
+  .flow-card-sub { font-size: 12px; color: var(--gray-400); margin-bottom: 20px; }
+  .flow-source {
+    background: var(--blue-light);
+    border: 1.5px solid rgba(24,95,165,0.25);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .flow-source-left .fs-title { font-size: 13px; font-weight: 700; color: var(--blue); }
+  .flow-source-left .fs-bank { font-size: 11px; color: var(--blue-dark); margin-top: 1px; opacity: 0.8; }
+  .flow-source-right { font-size: 20px; font-weight: 700; color: var(--blue); }
+
+  .flow-stage { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 2px; }
+  .flow-spine { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 28px; }
+  .flow-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0; }
+  .flow-vline { width: 1.5px; background: var(--gray-200); flex: 1; min-height: 16px; margin-top: 3px; }
+  .flow-body { flex: 1; padding-bottom: 12px; }
+  .flow-stage-title { font-size: 12px; font-weight: 700; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; margin-top: 2px; }
+  .flow-content-row { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .flow-left { flex: 1; min-width: 160px; }
+  .flow-right { flex-shrink: 0; text-align: right; min-width: 90px; }
+  .flow-rest-label { font-size: 10px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+  .flow-rest-amount { font-size: 18px; font-weight: 700; }
+  .flow-rest-pct { font-size: 10px; font-weight: 500; margin-top: 1px; }
+  .flow-rest-bar { height: 3px; border-radius: 2px; background: var(--gray-100); overflow: hidden; margin-top: 5px; width: 80px; margin-left: auto; }
+  .flow-rest-fill { height: 100%; border-radius: 2px; }
+
+  .flow-box { border-radius: var(--radius-sm); overflow: hidden; }
+  .flow-box-header { padding: 7px 12px; font-size: 11px; font-weight: 700; }
+  .flow-box-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 12px; font-size: 12px; border-top: 1px solid var(--border); background: white; }
+  .flow-box-sub { font-size: 10px; color: var(--gray-400); }
+
+  .c24-group-box { border: 2px solid rgba(133,79,11,0.2); border-radius: var(--radius-sm); overflow: hidden; }
+  .c24-group-header { background: rgba(133,79,11,0.1); padding: 7px 12px; display: flex; justify-content: space-between; }
+  .c24-group-title { font-size: 11px; font-weight: 700; color: var(--amber); }
+  .c24-section-label { padding: 4px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .c24-konsum-label { background: rgba(15,110,86,0.08); color: var(--green); }
+  .c24-spar-label { background: rgba(133,79,11,0.08); color: var(--amber); border-top: 1px solid var(--border); }
+
+  .flow-puffer {
+    border: 2px dashed var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--gray-50);
+  }
+
+  /* DA table */
+  .da-table { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 16px; box-shadow: var(--shadow); }
+  .da-header { background: var(--gray-100); padding: 10px 16px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; }
+  .da-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--gray-900); }
+  .da-row.total { font-weight: 700; background: var(--gray-50); }
+  .da-arrow { color: var(--blue); font-weight: 700; margin-right: 6px; }
+
+  /* Einnahmen bar */
+  .ein-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-bottom: 10px; }
+  .ein-segment { height: 100%; }
+  .ein-legend { display: flex; flex-direction: column; gap: 3px; }
+  .ein-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--gray-600); }
+  .ein-dot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+  .ein-amount { font-weight: 600; color: var(--gray-900); margin-left: auto; }
+
+  @media (max-width: 500px) {
+    .bank-grid { grid-template-columns: repeat(2,1fr); }
+    .spar-fields { grid-template-columns: 1fr 1fr; }
+    .stat-grid { grid-template-columns: repeat(2,1fr); }
+    .flow-content-row { flex-direction: column; }
+    .flow-right { text-align: left; }
+    .flow-rest-bar { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    </div>
+    <div>
+      <div class="header-title">Mehrkonten-System</div>
+      <div class="header-subtitle">Finanzberatung</div>
+    </div>
+  </div>
+  <div style="font-size:11px;color:var(--gray-400);font-weight:500;" id="step-counter">Schritt 1 von 6</div>
+</header>
+<div class="progress-bar-wrap">
+  <div class="progress-bar" id="progress" style="width:16.6%"></div>
+</div>
+
+<div class="container">
+
+  <!-- STEP 1: Verteilerkonto Bank -->
+  <div class="step active" id="step1">
+    <div class="step-num">Schritt 1 von 6</div>
+    <div class="step-title">Verteilerkonto wählen</div>
+    <div class="step-sub">Alle Einnahmen gehen hier ein – von hier laufen alle Daueraufträge automatisch ab.</div>
+    <div class="info-box">
+      <div class="info-box-title">Das Herzstück des Systems</div>
+      <div class="info-box-text">Du gibst von diesem Konto selbst nichts direkt aus. Es ist nur der Verteiler – eingehende Gehälter raus, fertig.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Bank auswählen</div>
+      <div class="bank-grid" id="grid-v"></div>
+      <div class="custom-row">
+        <input type="text" id="cv" placeholder="Andere Bank eingeben...">
+        <button class="add-btn" onclick="addCustom('v')">+ Übernehmen</button>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn-next" onclick="go(2)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Fixkostenkonto Bank -->
+  <div class="step" id="step2">
+    <div class="step-num">Schritt 2 von 6</div>
+    <div class="step-title">Fixkostenkonto wählen</div>
+    <div class="step-sub">Hier werden alle festen monatlichen Ausgaben abgebucht – Miete, Versicherungen, Abos.</div>
+    <div class="info-box">
+      <div class="info-box-title">Tipp: Bestehendes Konto nutzen</div>
+      <div class="info-box-text">Nimm das Konto von dem ohnehin schon alle Fixkosten abgebucht werden. Keine Bankverbindungen müssen umgestellt werden – das System läuft sofort.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Bank auswählen</div>
+      <div class="bank-grid" id="grid-f"></div>
+      <div class="custom-row">
+        <input type="text" id="cf" placeholder="Andere Bank eingeben...">
+        <button class="add-btn" onclick="addCustom('f')">+ Übernehmen</button>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="go(1)">← Zurück</button>
+      <button class="btn-next" onclick="go(3)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Einnahmen -->
+  <div class="step" id="step3">
+    <div class="step-num">Schritt 3 von 6</div>
+    <div class="step-title">Einnahmen erfassen</div>
+    <div class="step-sub">Alle monatlichen Nettoeinkünfte – sie landen alle auf dem Verteilerkonto.</div>
+    <div class="info-box">
+      <div class="info-box-title">Nicht jeden Euro sofort verplanen</div>
+      <div class="info-box-text">Das Verteilerkonto ist kein leeres Durchlaufkonto. Lass bewusst einen Puffer liegen – für Autoreparaturen, Arztkosten oder spontane Ausgaben. Ein gesunder Puffer sind 1–2 Monatsgehälter.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Einnahmequellen</div>
+      <div id="ein-list"></div>
+      <button class="add-btn" onclick="addEin()" style="margin-top:4px;">+ Einnahmequelle hinzufügen</button>
+      <div class="total-row"><span>Gesamt Nettoeinkommen</span><span id="t-ein">0 €</span></div>
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="go(2)">← Zurück</button>
+      <button class="btn-next" onclick="go(4)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Fixkosten -->
+  <div class="step" id="step4">
+    <div class="step-num">Schritt 4 von 6</div>
+    <div class="step-title">Fixkosten eintragen</div>
+    <div class="step-sub">Alle festen monatlichen Ausgaben – Miete, Versicherungen, Abos etc.</div>
+    <div class="info-box">
+      <div class="info-box-title">Nur echte Fixkosten hier eintragen</div>
+      <div class="info-box-text">Fixkosten sind Beträge die jeden Monat gleich bleiben und automatisch abgebucht werden. Variable Ausgaben wie Tanken oder Kleidung gehören auf das C24 Konto.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fixkostenpositionen</div>
+      <div id="fix-list"></div>
+      <button class="add-btn" onclick="addFix()" style="margin-top:4px;">+ Position hinzufügen</button>
+      <div class="total-row"><span>Gesamt Fixkosten</span><span id="t-fix">0 €</span></div>
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="go(3)">← Zurück</button>
+      <button class="btn-next" onclick="go(5)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: C24 Pockets -->
+  <div class="step" id="step5">
+    <div class="step-num">Schritt 5 von 6</div>
+    <div class="step-title">C24 Pockets einrichten</div>
+    <div class="step-sub">Konto 3 ist fest die C24 Bank – jeder Pocket hat eine eigene IBAN.</div>
+    <div class="info-box">
+      <div class="info-box-title">C24 Pockets haben eigene IBANs</div>
+      <div class="info-box-text">Jeder C24 Pocket ist eine eigene virtuelle Kontonummer. Daueraufträge laufen direkt auf den jeweiligen Pocket – die Trennung ist damit wasserdicht.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Konsum-Pockets</div>
+      <div id="konsum-list"></div>
+      <button class="add-btn" onclick="addKonsum()" style="margin-top:4px;">+ Konsum-Pocket hinzufügen</button>
+      <div class="total-row"><span>Gesamt Konsum</span><span id="t-konsum">0 €</span></div>
+      <div class="info-box" style="margin-top:12px;margin-bottom:0;">
+        <div class="info-box-title">Pocket leer = Schluss für diesen Monat</div>
+        <div class="info-box-text">Die Pocket-Methode macht Disziplin überflüssig. Wenn das Budget aufgebraucht ist, ist es aufgebraucht – kein mentales Rechnen mehr.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sparziel-Pockets</div>
+      <div class="info-box" style="margin-bottom:14px;">
+        <div class="info-box-title">Smarte Sparziele mit Priorität</div>
+        <div class="info-box-text">Trage Zielname, Betrag und Datum ein – der monatliche Sparbetrag wird automatisch berechnet. Mit dem Prioritätsslider gewichtest du welches Ziel wichtiger ist. Bei knappem Budget werden Ziele mit niedrigerer Priorität zuerst reduziert.</div>
+      </div>
+      <div id="spar-list"></div>
+      <button class="add-btn" onclick="addSpar()" style="margin-top:4px;">+ Sparziel hinzufügen</button>
+      <div class="total-row" style="margin-top:12px;"><span>Gesamt C24 Dauerauftrag</span><span id="t-c24">0 €</span></div>
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="go(4)">← Zurück</button>
+      <button class="btn-next" onclick="go(6)">Auswertung anzeigen →</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: Result -->
+  <div class="step" id="step6">
+    <div class="step-num">Auswertung</div>
+    <div class="step-title">Dein Mehrkonten-Plan</div>
+    <div class="step-sub">Alle Daueraufträge auf einen Blick – direkt umsetzbar.</div>
+    <div id="ergebnis"></div>
+    <div class="nav" style="margin-top:24px;">
+      <button class="btn-back" onclick="go(5)">← Anpassen</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BANKS=[{name:'DKB',type:'Direktbank',rec:true},{name:'ING',type:'Direktbank'},{name:'Commerzbank',type:'Filialbank'},{name:'Sparkasse',type:'Filialbank'},{name:'Volksbank',type:'Filialbank'},{name:'Deutsche Bank',type:'Filialbank'}];
+let bV=[...BANKS],bF=[...BANKS],selV='DKB',selF='Sparkasse';
+let einnahmen=[{name:'',betrag:0}];
+let fixkosten=[{name:'',betrag:0}];
+let konsum=[{name:'Lebensmittel',betrag:0},{name:'Konsum / Freizeit',betrag:0}];
+let sparziele=[];
+const EIN_COLORS=['#185FA5','#0F6E56','#854F0B','#993556','#534AB7'];
+
+function esc(str){const d=document.createElement('div');d.appendChild(document.createTextNode(str));return d.innerHTML;}
+
+
+function fmt(n){return Math.round(n).toLocaleString('de-DE')+' €';}
+function pct(a,b){return b===0?0:Math.min(100,Math.round(a/b*100));}
+function mUntil(d){if(!d)return 1;const n=new Date(),t=new Date(d);return Math.max(1,(t.getFullYear()-n.getFullYear())*12+(t.getMonth()-n.getMonth()));}
+function cMonthly(z,a,d){return Math.max(1,Math.ceil(Math.max(0,z-a)/mUntil(d)));}
+function pCol(p){return p<=2?'#B4B2A9':p<=4?'#888780':p<=6?'#639922':p<=8?'#BA7517':'#E24B4A';}
+function pLbl(p){return p<=2?'Sehr niedrig':p<=4?'Niedrig':p<=6?'Mittel':p<=8?'Hoch':'Sehr hoch';}
+
+function computeAdjustedSpar(totalEink,totalFix,totalKonsum){
+  const available=totalEink-totalFix-totalKonsum;
+  const sorted=[...sparziele].map((s,i)=>({...s,origIdx:i,monthly:cMonthly(s.ziel||0,s.aktuell||0,s.datum)})).sort((a,b)=>(b.prio||5)-(a.prio||5));
+  const ideal=sorted.reduce((s,z)=>s+z.monthly,0);
+  if(available>=ideal) return sorted.map(s=>({...s,adjusted:s.monthly,reduced:false}));
+  let budget=Math.max(0,available);
+  const result=sorted.map(s=>({...s,adjusted:s.monthly,reduced:false}));
+  for(let i=result.length-1;i>=0;i--){
+    if(budget>=result.slice(0,i+1).reduce((s,z)=>s+z.adjusted,0)) break;
+    const needed=result.slice(0,i).reduce((s,z)=>s+z.adjusted,0);
+    const leftover=Math.max(0,budget-needed);
+    if(leftover<result[i].adjusted){result[i].adjusted=leftover;result[i].reduced=true;}
+  }
+  return result;
+}
+
+function ngCheck(totalEink){
+  const ng=sparziele.find(s=>['notgroschen','sicherheit','liquidit','reserve'].some(k=>s.name.toLowerCase().includes(k)));
+  if(!ng) return null;
+  const threshold=totalEink*1.5;
+  if((ng.ziel||0)<threshold) return {name:ng.name,target:ng.ziel||0,threshold};
+  return null;
+}
+
+function renderGrid(k){
+  const arr=k==='v'?bV:bF,sel=k==='v'?selV:selF;
+  const filtered=k==='f'?arr.filter(b=>b.name!==selV):arr;
+  if(k==='f' && sel===selV) selF=filtered[0]?.name||'';
+  document.getElementById('grid-'+k).innerHTML=filtered.map(b=>`<div class="bank-btn${sel===b.name?' selected':''}" onclick="selBank('${k}','${esc(b.name)}')">${b.rec?'<div class="rec">Empfehlung</div>':''}<div class="name">${esc(b.name)}</div><div class="type">${esc(b.type)}</div></div>`).join('');
+}
+function selBank(k,n){if(k==='v')selV=n;else selF=n;renderGrid(k);}
+function addCustom(k){
+  const raw=document.getElementById('c'+k).value.trim();
+  if(!raw)return;
+  const safe=raw.replace(/[<>"'&]/g,'');
+  if(!safe)return;
+  if(k==='v'){selV=safe;bV.push({name:safe,type:'Eigene Bank'});}
+  else{selF=safe;bF.push({name:safe,type:'Eigene Bank'});}
+  renderGrid(k);document.getElementById('c'+k).value='';
+}
+
+function renderEin(){
+  document.getElementById('ein-list').innerHTML=einnahmen.map((e,i)=>`
+    <div class="field-row">
+      <div style="width:10px;height:10px;border-radius:2px;background:${EIN_COLORS[i%EIN_COLORS.length]};flex-shrink:0;"></div>
+      <input type="text" style="flex:1;" value="${e.name}" onchange="einnahmen[${i}].name=this.value;calcT()">
+      <input type="number" style="width:90px;flex:none;" value="${e.betrag}" step="50" onchange="einnahmen[${i}].betrag=+this.value;calcT()">
+      <span class="eur">€</span>
+      ${einnahmen.length>1?`<button class="del-btn" onclick="einnahmen.splice(${i},1);renderEin();calcT()">×</button>`:'<span style="width:20px"></span>'}
+    </div>`).join('');calcT();
+}
+function renderFix(){
+  document.getElementById('fix-list').innerHTML=fixkosten.map((f,i)=>`
+    <div class="field-row">
+      <input type="text" style="flex:1;" value="${f.name}" onchange="fixkosten[${i}].name=this.value;calcT()">
+      <input type="number" style="width:90px;flex:none;" value="${f.betrag}" onchange="fixkosten[${i}].betrag=+this.value;calcT()">
+      <span class="eur">€</span>
+      <button class="del-btn" onclick="fixkosten.splice(${i},1);renderFix();calcT()">×</button>
+    </div>`).join('');calcT();
+}
+function renderSpar(){
+  document.getElementById('spar-list').innerHTML=sparziele.map((s,i)=>{
+    const m=cMonthly(s.ziel||0,s.aktuell||0,s.datum),mo=mUntil(s.datum),rem=Math.max(0,(s.ziel||0)-(s.aktuell||0)),pr=s.ziel>0?pct(s.aktuell||0,s.ziel):0,pc=pCol(s.prio||5);
+    return `<div class="spar-block">
+      <div class="spar-block-header"><div class="spar-block-name">${s.name||'Sparziel'}</div><button class="del-btn" onclick="sparziele.splice(${i},1);renderSpar();calcT()">×</button></div>
+      <div class="spar-fields">
+        <div class="spar-field"><label>Name</label><input type="text" value="${s.name}" onchange="sparziele[${i}].name=this.value;renderSpar();calcT()"></div>
+        <div class="spar-field"><label>Ziel (€)</label><input type="number" value="${s.ziel}" onchange="sparziele[${i}].ziel=+this.value;renderSpar();calcT()"></div>
+        <div class="spar-field"><label>Zieldatum</label><input type="date" value="${s.datum}" onchange="sparziele[${i}].datum=this.value;renderSpar();calcT()"></div>
+      </div>
+      <div class="spar-fields">
+        <div class="spar-field"><label>Bereits gespart</label><input type="number" value="${s.aktuell||0}" onchange="sparziele[${i}].aktuell=+this.value;renderSpar();calcT()"></div>
+        <div class="spar-field" style="grid-column:span 2;"><label>&nbsp;</label>
+          <div style="display:flex;align-items:center;gap:10px;padding-top:6px;">
+            <div class="prog-bar" style="flex:1;"><div class="prog-fill" style="width:${pr}%;background:#854F0B;"></div></div>
+            <span style="font-size:11px;color:var(--gray-400);flex-shrink:0;font-weight:600;">${pr}%</span>
+          </div>
+        </div>
+      </div>
+      <div class="prio-section">
+        <div class="prio-header"><span class="prio-label">Priorität</span><span class="prio-value" style="color:${pc};">${pLbl(s.prio||5)}</span></div>
+        <input type="range" min="1" max="10" step="1" value="${s.prio||5}" style="accent-color:${pc};" oninput="sparziele[${i}].prio=+this.value;renderSpar();calcT()">
+        <div class="prio-ticks"><span>Niedrig</span><span>Mittel</span><span>Hoch</span></div>
+      </div>
+      <div class="spar-result">
+        <div><div class="spar-monthly" style="color:#854F0B;font-size:18px;font-weight:700;">${fmt(m)} / Monat</div><div class="spar-info">noch ${fmt(rem)} in ${mo} Monaten</div></div>
+        <div style="text-align:right;"><div style="font-size:10px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.3px;">Zieldatum</div><div style="font-size:13px;font-weight:600;color:var(--gray-900);">${s.datum?new Date(s.datum).toLocaleDateString('de-DE',{month:'long',year:'numeric'}):'-'}</div></div>
+      </div>
+    </div>`;
+  }).join('');calcT();
+}
+
+function renderKonsum(){
+  document.getElementById('konsum-list').innerHTML=konsum.map((k,i)=>`
+    <div class="field-row">
+      <input type="text" style="flex:1;" value="${k.name}" onchange="konsum[${i}].name=this.value;calcT()">
+      <input type="number" style="width:90px;flex:none;" value="${k.betrag||''}" placeholder="0" onchange="konsum[${i}].betrag=+this.value;calcT()">
+      <span class="eur">€ / Mo</span>
+      ${konsum.length>1?`<button class="del-btn" onclick="konsum.splice(${i},1);renderKonsum();calcT()">×</button>`:'<span style="width:20px"></span>'}
+    </div>`).join('');calcT();
+}
+
+function addEin(){einnahmen.push({name:'',betrag:0});renderEin();}
+function addFix(){fixkosten.push({name:'',betrag:0});renderFix();}
+function addKonsum(){konsum.push({name:'Neuer Pocket',betrag:0});renderKonsum();calcT();}
+function addSpar(){const d=new Date();d.setMonth(d.getMonth()+12);sparziele.push({name:'Neues Sparziel',ziel:0,datum:d.toISOString().split('T')[0],aktuell:0,prio:5});renderSpar();calcT();}
+
+function calcT(){
+  const te=einnahmen.reduce((s,e)=>s+(+e.betrag||0),0);
+  const tf=fixkosten.reduce((s,f)=>s+(+f.betrag||0),0);
+  const tk=konsum.reduce((s,k)=>s+(+k.betrag||0),0);
+  const ts=sparziele.reduce((s,z)=>s+cMonthly(z.ziel||0,z.aktuell||0,z.datum),0);
+  const el=document.getElementById('t-ein'),fl=document.getElementById('t-fix'),cl=document.getElementById('t-c24'),kl=document.getElementById('t-konsum');
+  if(el)el.textContent=fmt(te);if(fl)fl.textContent=fmt(tf);if(cl)cl.textContent=fmt(tk+ts);if(kl)kl.textContent=fmt(tk);
+}
+
+function go(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  document.getElementById('step-counter').textContent=n<6?`Schritt ${n} von 6`:'Auswertung';
+  document.getElementById('progress').style.width=(n/6*100)+'%';
+  if(n===1)renderGrid('v');if(n===2)renderGrid('f');if(n===3)renderEin();if(n===4)renderFix();if(n===5){renderKonsum();renderSpar();}if(n===6)renderResult();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderResult(){
+  const totalEink=einnahmen.reduce((s,e)=>s+(+e.betrag||0),0);
+  const totalFix=fixkosten.reduce((s,f)=>s+(+f.betrag||0),0);
+  const totalKonsum=konsum.reduce((s,k)=>s+(+k.betrag||0),0);
+  const adj=computeAdjustedSpar(totalEink,totalFix,totalKonsum);
+  const totalSpar=adj.reduce((s,z)=>s+z.adjusted,0);
+  const totalC24=totalKonsum+totalSpar;
+  const wasAdj=adj.some(s=>s.reduced);
+  const gesamt=totalFix+totalC24;
+  const rest=totalEink-gesamt;
+  const ng=ngCheck(totalEink);
+
+  // Alerts
+  let alertHtml='';
+  if(rest<0)alertHtml=`<div class="alert alert-err">Ausgaben übersteigen Einkommen um ${fmt(Math.abs(rest))} – Sparziele wurden reduziert.</div>`;
+  else if(rest<100)alertHtml=`<div class="alert alert-warn">Nur ${fmt(rest)} Puffer übrig – Budgets überdenken.</div>`;
+  else alertHtml=`<div class="alert alert-ok">Verteilung geht auf – ${fmt(rest)} Puffer verbleiben monatlich.</div>`;
+  if(wasAdj)alertHtml+=`<div class="alert alert-warn">Sparziele wurden nach Priorität automatisch angepasst: ${adj.filter(s=>s.reduced).map(s=>s.name+' → '+fmt(s.adjusted)+'/Mo').join(', ')}.</div>`;
+  if(ng)alertHtml+=`<div class="alert alert-warn">Empfehlung: Notgroschen-Ziel auf mindestens ${fmt(Math.round(ng.threshold))} erhöhen (1,5 Monatsgehälter) und Priorität auf "Hoch" setzen.</div>`;
+
+  // Einnahmen bar
+  const einBar=einnahmen.map((e,i)=>`<div class="ein-segment" style="flex:${e.betrag||0};background:${EIN_COLORS[i%EIN_COLORS.length]};"></div>`).join('');
+  const einLegend=einnahmen.map((e,i)=>`<div class="ein-legend-row"><div class="ein-dot" style="background:${EIN_COLORS[i%EIN_COLORS.length]};"></div><span>${e.name}</span><span class="ein-amount">${fmt(e.betrag)}</span></div>`).join('');
+
+  // Stats
+  const stats=`<div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Einkommen</div><div class="stat-val">${fmt(totalEink)}</div></div>
+    <div class="stat-card"><div class="stat-label">Ausgaben</div><div class="stat-val">${fmt(gesamt)}</div></div>
+    <div class="stat-card"><div class="stat-label">Puffer</div><div class="stat-val">${fmt(Math.max(0,rest))}</div></div>
+    <div class="stat-card"><div class="stat-label">Sparquote</div><div class="stat-val">${pct(totalSpar,totalEink)} %</div></div>
+  </div>`;
+
+  // Konto cards
+  const kontoV=`<div class="konto-card" style="background:var(--blue);color:white;">
+    <div class="konto-header"><div><div class="konto-name">Konto 1 – Verteilerkonto</div><div class="konto-bank">${selV} · alle Einnahmen kommen hier an</div></div><div><div class="konto-sub">Eingang</div><div class="konto-amount">${fmt(totalEink)}</div></div></div>
+    <div class="konto-bar"><div class="konto-bar-fill" style="width:100%;"></div></div>
+    <div class="konto-detail">Von hier gehen alle Daueraufträge ab → Fixkosten & C24 Pockets</div>
+    ${rest>=100?`<div class="info-box" style="margin-top:10px;margin-bottom:0;background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.4);"><div class="info-box-title" style="color:white;">Puffer: ${fmt(rest)} / Monat</div><div class="info-box-text" style="color:rgba(255,255,255,0.85);">Dieser Betrag wächst monatlich als Sicherheitspuffer. Erst wenn er 1–2 Monatsgehälter erreicht, lohnt es sich den Überschuss aktiv umzuschichten.</div></div>`:''}
+  </div>`;
+
+  const kontoF=`<div class="konto-card" style="background:var(--green);color:white;">
+    <div class="konto-header"><div><div class="konto-name">Konto 2 – Fixkostenkonto</div><div class="konto-bank">${selF}</div></div><div><div class="konto-sub">Dauerauftrag</div><div class="konto-amount">${fmt(totalFix)}</div></div></div>
+    <div class="konto-bar"><div class="konto-bar-fill" style="width:${pct(totalFix,totalEink)}%;"></div></div>
+    <div class="konto-detail">${fixkosten.map(f=>`${f.name}: ${fmt(f.betrag)}`).join(' · ')||'–'}</div>
+    <div class="info-box" style="margin-top:10px;margin-bottom:0;background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.4);"><div class="info-box-title" style="color:white;">Läuft auf Autopilot</div><div class="info-box-text" style="color:rgba(255,255,255,0.85);">Sobald der Dauerauftrag eingerichtet ist, musst du dieses Konto nie wieder aktiv anfassen.</div></div>
+  </div>`;
+
+  const konsumPockets=konsum.map(k=>`
+    <div class="pocket-card"><div class="pocket-header"><div><div class="pocket-name">${k.name}</div><div class="pocket-iban">Eigene IBAN · Dauerauftrag direkt auf diesen Pocket</div></div><div class="pocket-amount" style="color:var(--green);">${fmt(k.betrag)}<span style="font-size:10px;font-weight:400;color:var(--gray-400);"> / Mo</span></div></div></div>`).join('')+
+    `<div class="info-box" style="margin-top:8px;margin-bottom:0;"><div class="info-box-title">Pocket leer = Schluss für diesen Monat</div><div class="info-box-text">Die Pocket-Methode macht Disziplin überflüssig. Wenn das Budget aufgebraucht ist, ist es aufgebraucht.</div></div>`;
+
+  const sparPockets=adj.map(s=>{
+    const pr=s.ziel>0?pct(s.aktuell||0,s.ziel):0,pc=pCol(s.prio||5),pl=pLbl(s.prio||5),rem=Math.max(0,(s.ziel||0)-(s.aktuell||0)),mo=mUntil(s.datum);
+    const pips=[1,3,5,7,9].map(v=>`<div class="pip" style="background:${(s.prio||5)>=v?pc:'var(--gray-200)'}"></div>`).join('');
+    return `<div class="pocket-card" style="border-color:${pc}30;">
+      <div class="pocket-header">
+        <div><div class="pocket-name">${s.name}${s.reduced?'<span class="adj-badge">angepasst</span>':''}</div><div class="pips">${pips}<span class="pip-label" style="color:${pc};">${pl}</span></div><div class="pocket-iban">Eigene IBAN · Dauerauftrag direkt auf diesen Pocket</div></div>
+        <div style="text-align:right;"><div class="pocket-amount" style="color:var(--amber);">${fmt(s.adjusted)}<span style="font-size:10px;font-weight:400;color:var(--gray-400);"> / Mo</span></div>${s.reduced?`<div style="font-size:10px;color:var(--amber);">Ziel: ${fmt(s.monthly)}/Mo</div>`:''}</div>
+      </div>
+      <div class="prog-bar" style="margin:6px 0 4px;"><div class="prog-fill" style="width:${pr}%;background:var(--amber);"></div></div>
+      <div class="pocket-meta">Ziel: ${fmt(s.ziel||0)} · Noch ${fmt(rem)} · ${mo} Monate · Bis ${s.datum?new Date(s.datum).toLocaleDateString('de-DE',{month:'long',year:'numeric'}):'-'}</div>
+    </div>`;
+  }).join('');
+
+  const kontoC24=`<div class="konto-card" style="background:var(--amber);color:white;">
+    <div class="konto-header"><div><div class="konto-name">Konto 3 – C24 Bank <span style="font-size:10px;background:rgba(255,255,255,0.25);padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:600;">fest</span></div><div class="konto-bank">Jeder Pocket hat eine eigene IBAN</div></div><div><div class="konto-sub">Daueraufträge gesamt</div><div class="konto-amount">${fmt(totalC24)}</div></div></div>
+    <div class="konto-bar"><div class="konto-bar-fill" style="width:${pct(totalC24,totalEink)}%;"></div></div>
+    <div class="section-divider" style="margin-top:14px;"><div class="divider-line" style="background:rgba(255,255,255,0.3);"></div><div class="divider-label" style="color:rgba(255,255,255,0.7);">Konsum-Pockets</div><div class="divider-line" style="background:rgba(255,255,255,0.3);"></div></div>
+    ${konsumPockets}
+    <div class="section-divider"><div class="divider-line" style="background:rgba(255,255,255,0.3);"></div><div class="divider-label" style="color:rgba(255,255,255,0.7);">Sparziel-Pockets · nach Priorität</div><div class="divider-line" style="background:rgba(255,255,255,0.3);"></div></div>
+    ${sparPockets}
+  </div>`;
+
+  // Flow diagram
+  const afterFix=totalEink-totalFix;
+  const afterKonsum=afterFix-totalKonsum;
+  const afterSpar=afterKonsum-totalSpar;
+  const pufferColor=rest<0?'var(--red)':rest<100?'var(--amber)':'var(--green)';
+
+  function stageBlock(num,numBg,title,content,restAmt){
+    const rPct=pct(Math.max(0,restAmt),totalEink);
+    const rCol=restAmt<0?'var(--red)':restAmt<100?'var(--amber)':'var(--blue)';
+    return `<div class="flow-stage">
+      <div class="flow-spine">
+        <div class="flow-num" style="background:${numBg};">${num}</div>
+        ${num<4?'<div class="flow-vline"></div>':''}
+      </div>
+      <div class="flow-body">
+        <div class="flow-stage-title">${title}</div>
+        <div class="flow-content-row">
+          <div class="flow-left">${content}</div>
+          <div class="flow-right">
+            <div class="flow-rest-label">danach übrig</div>
+            <div class="flow-rest-amount" style="color:${rCol};">${fmt(Math.max(0,restAmt))}</div>
+            <div class="flow-rest-pct" style="color:${rCol};">${rPct}% des Einkommens</div>
+            <div class="flow-rest-bar"><div class="flow-rest-fill" style="width:${rPct}%;background:${rCol};"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const stage1=stageBlock(1,'var(--green)',`Fixkosten → ${selF}`,
+    `<div class="flow-box" style="background:var(--green-light);border:1px solid rgba(15,110,86,0.2);">
+      <div class="flow-box-header" style="background:var(--green-light);color:var(--green);">${selF} · ${fmt(totalFix)}</div>
+      ${fixkosten.map(f=>`<div class="flow-box-item"><span>${f.name}</span><span style="font-weight:600;">${fmt(f.betrag)}</span></div>`).join('')}
+    </div>`,afterFix);
+
+  const stage2=stageBlock(2,'var(--amber)',`Konsum-Pockets → C24`,
+    `<div class="c24-group-box" style="border-color:rgba(15,110,86,0.25);">
+      <div class="c24-section-label c24-konsum-label">Konsum-Pockets</div>
+      ${konsum.map(k=>`<div class="flow-box-item" style="background:white;"><span style="color:var(--green);">${k.name}</span><span style="font-weight:600;">${fmt(k.betrag)}</span></div>`).join('')}
+    </div>`,afterKonsum);
+
+  const sparRows=adj.map(s=>`<div class="flow-box-item" style="background:white;"><span style="color:${pCol(s.prio||5)};">${s.name}${s.reduced?'<span class="adj-badge">↓</span>':''}</span><span style="font-weight:600;">${fmt(s.adjusted)}</span></div>`).join('');
+  const stage3=stageBlock(3,'var(--amber)',`Sparziel-Pockets → C24`,
+    `<div class="c24-group-box">
+      <div class="c24-section-label c24-spar-label">Sparziel-Pockets · nach Priorität</div>
+      ${sparRows}
+    </div>`,afterSpar);
+
+  const stage4=`<div class="flow-stage">
+    <div class="flow-spine"><div class="flow-num" style="background:${pufferColor};">4</div></div>
+    <div class="flow-body">
+      <div class="flow-stage-title">Puffer verbleibt</div>
+      <div class="flow-puffer">
+        <div><div style="font-size:12px;font-weight:600;color:var(--gray-900);">Verbleibt auf ${selV}</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">${rest>=100?'Wächst monatlich als Sicherheitspuffer an':rest<0?'Ausgaben übersteigen Einkommen':'Sehr knapper Puffer'}</div></div>
+        <div style="text-align:right;"><div style="font-size:22px;font-weight:700;color:${pufferColor};">${fmt(Math.abs(rest))}</div><div style="font-size:10px;color:${pufferColor};font-weight:600;">${pct(Math.abs(rest),totalEink)}% des Einkommens</div></div>
+      </div>
+    </div>
+  </div>`;
+
+  const flowDiagram=`<div class="flow-card">
+    <div class="flow-card-title">Geldfluss-Übersicht</div>
+    <div class="flow-card-sub">Von oben nach unten – je weiter unten, desto mehr Spielraum zur eigenen Gestaltung.</div>
+    <div class="flow-source">
+      <div class="flow-source-left"><div class="fs-title">Verteilerkonto · ${selV}</div><div class="fs-bank">Alle Einnahmen kommen hier an</div></div>
+      <div class="flow-source-right">${fmt(totalEink)}</div>
+    </div>
+    <div style="border-left:2px solid var(--gray-200);margin-left:13px;padding-left:0;margin-top:4px;">
+      ${stage1}${stage2}${stage3}${stage4}
+    </div>
+  </div>`;
+
+  // DA table
+  const daTable=`<div class="da-table">
+    <div class="da-header"><span>Daueraufträge einrichten ab ${selV}</span><span>Betrag</span></div>
+    <div class="da-row"><span><span class="da-arrow">→</span>Fixkostenkonto (${selF})</span><span>${fmt(totalFix)}</span></div>
+    ${konsum.map(k=>`<div class="da-row"><span><span class="da-arrow">→</span>C24 Pocket: ${k.name}</span><span>${fmt(k.betrag)}</span></div>`).join('')}
+    ${adj.map(s=>`<div class="da-row"><span><span class="da-arrow">→</span>C24 Pocket: ${s.name}${s.reduced?' ↓':''}</span><span>${fmt(s.adjusted)}</span></div>`).join('')}
+    <div class="da-row"><span>Puffer verbleibt auf ${selV}</span><span>${fmt(Math.max(0,rest))}</span></div>
+    <div class="da-row total"><span>Gesamt Einkommen</span><span>${fmt(totalEink)}</span></div>
+  </div>`;
+
+  document.getElementById('ergebnis').innerHTML=`
+    ${alertHtml}
+    <div class="card">
+      <div class="card-title">Einnahmen · ${fmt(totalEink)}</div>
+      <div class="ein-bar">${einBar}</div>
+      <div class="ein-legend">${einLegend}</div>
+    </div>
+    ${stats}
+    ${kontoV}${kontoF}${kontoC24}
+    ${flowDiagram}
+    ${daTable}
+    ${buildEmailSection(totalEink, totalFix, totalKonsum, totalSpar, totalC24, rest, adj)}
+  `;
+}
+
+function buildEmailSection(totalEink, totalFix, totalKonsum, totalSpar, totalC24, rest, adj){
+  const summary = `
+Mein Mehrkonten-Plan:
+
+Nettoeinkommen: ${fmt(totalEink)}
+Fixkosten (${selF}): ${fmt(totalFix)}
+C24 Konsum-Pockets: ${fmt(totalKonsum)}
+C24 Sparziel-Pockets: ${fmt(totalSpar)}
+Puffer (${selV}): ${fmt(Math.max(0,rest))}
+Sparquote: ${pct(totalSpar,totalEink)}%
+
+Konsum-Pockets:
+${konsum.map(k=>`- ${k.name}: ${fmt(k.betrag)}/Mo`).join('\n')}
+
+Sparziel-Pockets:
+${adj.map(s=>`- ${s.name}: ${fmt(s.adjusted)}/Mo (Ziel: ${fmt(s.ziel||0)}, bis ${s.datum?new Date(s.datum).toLocaleDateString('de-DE',{month:'long',year:'numeric'}):'-'})`).join('\n')}
+
+Daueraufträge ab ${selV}:
+- → Fixkostenkonto (${selF}): ${fmt(totalFix)}
+${konsum.map(k=>`- → C24 Pocket: ${k.name}: ${fmt(k.betrag)}`).join('\n')}
+${adj.map(s=>`- → C24 Pocket: ${s.name}: ${fmt(s.adjusted)}`).join('\n')}
+  `.trim();
+
+  // Store summary globally so submitPlan() can access it
+  window._planSummary = summary;
+
+  return `
+    <div class="card" style="margin-top:24px;border:1.5px solid var(--blue);background:var(--blue-light);">
+      <div class="card-title" style="color:var(--blue);">Plan per E-Mail zusenden</div>
+      <p style="font-size:13px;color:var(--blue-dark);margin-bottom:16px;line-height:1.6;">
+        Trag deine E-Mail ein und bekomme deinen persönlichen Mehrkonten-Plan als Zusammenfassung zugeschickt.
+      </p>
+      <div id="email-form">
+        <div class="field-row" style="margin-bottom:12px;">
+          <input type="text" id="lead-name" placeholder="Dein Name" style="flex:1;">
+        </div>
+        <div class="field-row" style="margin-bottom:16px;">
+          <input type="email" id="lead-email" placeholder="Deine E-Mail-Adresse" style="flex:1;">
+        </div>
+        <button onclick="submitPlan(event)" style="width:100%;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--blue);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
+          Plan jetzt per E-Mail erhalten →
+        </button>
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;">
+          <input type="checkbox" id="consent-check" style="margin-top:3px;flex-shrink:0;width:14px;height:14px;cursor:pointer;">
+          <label for="consent-check" style="font-size:11px;color:var(--gray-600);line-height:1.5;cursor:pointer;">
+            Ich stimme zu, dass meine E-Mail-Adresse zur einmaligen Zusendung meines persönlichen Finanzplans verwendet wird. Die Daten werden nicht an Dritte weitergegeben und nicht dauerhaft gespeichert. Kein Newsletter, kein Spam.
+          </label>
+        </div>
+      </div>
+      <div id="email-success" style="display:none;text-align:center;padding:16px 0;">
+        <div style="font-size:24px;margin-bottom:8px;">✅</div>
+        <div style="font-size:15px;font-weight:600;color:var(--blue);">Plan wurde versendet!</div>
+        <div style="font-size:13px;color:var(--blue-dark);margin-top:4px;">Schau in dein Postfach – der Plan ist unterwegs.</div>
+      </div>
+      <div id="email-error" style="display:none;padding:10px 14px;background:var(--red-light);border-radius:var(--radius-sm);margin-top:12px;font-size:13px;color:var(--red);">
+        Etwas hat nicht geklappt. Bitte versuche es erneut.
+      </div>
+    </div>
+  `;
+}
+
+function submitPlan(e){
+  var name = document.getElementById('lead-name').value.trim();
+  var email = document.getElementById('lead-email').value.trim();
+  var consent = document.getElementById('consent-check').checked;
+  var errEl = document.getElementById('email-error');
+  if(!consent){
+    errEl.style.display='block';
+    errEl.textContent='Bitte stimme der Datenschutzerklärung zu um fortzufahren.';
+    return;
+  }
+  if(!email || !email.includes('@')){
+    errEl.style.display='block';
+    errEl.textContent='Bitte gib eine gültige E-Mail-Adresse ein.';
+    return;
+  }
+  errEl.style.display='none';
+  var btn = e.target;
+  btn.textContent='Wird gesendet...';
+  btn.disabled=true;
+  fetch('https://formspree.io/f/xaqplenv', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body: JSON.stringify({
+      name: name,
+      email: email,
+      plan: window._planSummary||'',
+      _replyto: email,
+      _subject: 'Dein Mehrkonten-Plan – ' + (name||email)
+    })
+  }).then(function(r){
+    if(r.ok){
+      document.getElementById('email-form').style.display='none';
+      document.getElementById('email-success').style.display='block';
+    } else { throw new Error(); }
+  }).catch(function(){
+    btn.textContent='Plan jetzt per E-Mail erhalten →';
+    btn.disabled=false;
+    errEl.style.display='block';
+    errEl.textContent='Etwas hat nicht geklappt. Bitte versuche es erneut.';
+  });
+}
+
+// Init
+go(1);
+</script>
+</body>
+</html>
